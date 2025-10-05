@@ -32,8 +32,7 @@ def is_nucleic_acid(sequence: str) -> bool:
 
 def transcribe(sequence: str) -> str | None:
     if is_dna(sequence):
-        transcribe_seq = ''.join([mrna_complement[nt] for nt in sequence])
-        return transcribe_seq
+        return ''.join([mrna_complement[nt] for nt in sequence])
 
     if is_rna(sequence):
         return sequence
