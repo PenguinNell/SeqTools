@@ -8,7 +8,21 @@ func_dict={'is_nucleic_acid': nuclei.is_nucleic_acid,
            'reverse_complement': nuclei.get_reverse_complement}
 
 
-def run_dna_rna_tools(*args):
+def run_dna_rna_tools(*args: str) -> str | list | None:
+    """
+    Applies a specified procedure to one or multiple nucleotide sequences
+
+    Arguments:
+    *args: any number of string arguments, where:
+        - the first N arguments are nucleotide sequences
+        - the last argument is the procedure to apply
+          (supported procedures: 'is_nucleic_acid', 'transcribe', 'reverse',
+          'complement', 'reverse_complement')
+
+    Returns result of the specified procedure: str / list
+    If the procedure is not supported - returns None
+    """
+
     *seqs, procedure = args
 
     if not seqs and procedure in func_dict:
@@ -34,8 +48,21 @@ def run_dna_rna_tools(*args):
 def filter_fastq(fastq_seqs: dict,
                  gc_bounds: int | float | tuple = (0, 100),
                  length_bounds: int | float | tuple = (0, 2**32),
-                 quality_threshold: int | float = 0) -> dict | None: # по заданию первый аргумент должен называться seqs, но я решила дать ему другое название, чтобы не было путанницы со списком сиквенсов НЕ в fastq-формате
-    # check no input
+                 quality_threshold: int | float = 0) -> dict | None:
+    """
+    Filters FASTQ sequences by GC content, length, and quality.
+
+    Arguments:
+    fastq_seqs (dict): dictionary with sequence names (IDs) as keys and tuples of (sequence, quality) as values
+    gc_bounds (int | float | tuple, optional): GC content range in percent (default: (0, 100))
+        Can be a tuple (min, max) or a single number (upper threshold)
+    length_bounds (int | float | tuple, optional): length range (default: (0, 2**32))
+         Can be a tuple (min, max) or a single number (upper threshold)
+    quality_threshold (int | float, optional): minimum average quality (default: 0)
+
+    Returns: dict | None (filtered sequences, or None if none pass)
+    """
+
     filtered_fastq_seqs = {}
 
     for seq_id, (seq, quality) in fastq_seqs.items():
