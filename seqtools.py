@@ -8,37 +8,33 @@ func_dict={'is_nucleic_acid': nuclei.is_nucleic_acid,
            'reverse_complement': nuclei.get_reverse_complement}
 
 
-def run_dna_rna_tools(*args, func_dict=func_dict):
-    if not args:
-        print("Please provide arguments!")
+def run_dna_rna_tools(*args):
+    *seqs, procedure = args
+
+    if not seqs and procedure in func_dict:
+        print("Looks like you forgot to provide a nucleotide sequence(s). Please try again!")
         return None
 
-    else:
-        *seqs, procedure = args
+    if procedure in func_dict:
+        selected_function = func_dict[procedure]
 
-        if not seqs and procedure in func_dict:
-            print("Looks like you forgot to provide a nucleotide sequence(s). Please try again!")
-            return None
+        if len(seqs) == 1:
+            res = selected_function(seqs[0])
+            return res
 
-        else:
-            if procedure in func_dict:
-                selected_function = func_dict[procedure]
+        res = []
+        for sq in seqs:
+            res.append(selected_function(sq))
+        return res
 
-                if len(seqs) == 1:
-                    res = selected_function(seqs[0])
-                    return res
-                else:
-                    res = []
-                    for sq in seqs:
-                        res.append(selected_function(sq))
-                    return res
-
-            else:
-                print("Looks like you forgot to specify what to do with the sequence(s). Please try again!")
-                return None
+    print("Looks like you forgot to specify what to do with the sequence(s). Please try again!")
+    return None
 
 
-def filter_fastq(fastq_seqs: dict, gc_bounds=(0, 100), length_bounds=(0, 2**32), quality_threshold=0) -> dict | None:
+def filter_fastq(fastq_seqs: dict,
+                 gc_bounds: int | float | tuple = (0, 100),
+                 length_bounds: int | float | tuple = (0, 2**32),
+                 quality_threshold: int | float = 0) -> dict | None: # по заданию первый аргумент должен называться seqs, но я решила дать ему другое название, чтобы не было путанницы со списком сиквенсов НЕ в fastq-формате
     # check no input
     filtered_fastq_seqs = {}
 
