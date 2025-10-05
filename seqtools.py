@@ -1,11 +1,11 @@
 import modules.dna_rna_tools as nuclei
 import modules.fastq_filter_checkers as fastq_filter
 
-func_dict={'is_nucleic_acid': nuclei.is_nucleic_acid,
-           'transcribe': nuclei.transcribe,
-           'reverse': nuclei.reverse,
-           'complement': nuclei.get_complement,
-           'reverse_complement': nuclei.get_reverse_complement}
+dna_rna_func={'is_nucleic_acid': nuclei.is_nucleic_acid,
+              'transcribe': nuclei.transcribe,
+              'reverse': nuclei.reverse,
+              'complement': nuclei.get_complement,
+              'reverse_complement': nuclei.get_reverse_complement}
 
 
 def run_dna_rna_tools(*args: str) -> str | list | None:
@@ -23,14 +23,14 @@ def run_dna_rna_tools(*args: str) -> str | list | None:
     If the procedure is not supported - returns None
     """
 
-    *seqs, procedure = args
+    *seqs, operation = args
 
-    if not seqs and procedure in func_dict:
+    if not seqs and operation in dna_rna_func:
         print("Looks like you forgot to provide a nucleotide sequence(s). Please try again!")
         return None
 
-    if procedure in func_dict:
-        selected_function = func_dict[procedure]
+    if operation in dna_rna_func:
+        selected_function = dna_rna_func[operation]
 
         if len(seqs) == 1:
             res = selected_function(seqs[0])

@@ -1,4 +1,4 @@
-def is_in_gc_bounds(seq: str, gc_bounds: int | float | tuple =(0, 100)) -> bool:
+def is_in_gc_bounds(seq: str, gc_bounds: int | float | tuple = (0, 100)) -> bool:
     seq = seq.lower()
     gc_count = 100 * (seq.count('g') + seq.count('c')) / len(seq)
 
@@ -11,7 +11,7 @@ def is_in_gc_bounds(seq: str, gc_bounds: int | float | tuple =(0, 100)) -> bool:
     return False
 
 
-def is_in_length_bounds(seq: str, length_bounds: int | float | tuple =(0, 2**32)) -> bool:
+def is_in_length_bounds(seq: str, length_bounds: int | float | tuple = (0, 2**32)) -> bool:
     if type(length_bounds) is not tuple:
         length_bounds = (0, length_bounds)
 
