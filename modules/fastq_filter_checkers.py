@@ -32,3 +32,17 @@ def is_above_quality_threshold(quality: str, quality_threshold: float = 0) -> bo
         return True
 
     return False
+
+
+def is_read_good(seq: str, quality: str,
+                 gc_bounds: int | float | tuple = (0, 100),
+                 length_bounds: int | float | tuple = (0, 2 ** 32),
+                 quality_threshold: int | float = 0) -> bool:
+    if (
+            not is_in_gc_bounds(seq, gc_bounds) or
+            not is_in_length_bounds(seq, length_bounds) or
+            not is_above_quality_threshold(quality, quality_threshold)
+    ):
+        return False
+
+    return True
