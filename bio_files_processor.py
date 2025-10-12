@@ -53,7 +53,7 @@ def convert_multiline_fasta_to_oneline(input_fasta: str, output_fasta: str = "")
     return None
 
 
-def parse_blast_output(input_file: str, output_file: str = ""):
+def parse_blast_output(input_file: str, output_file: str = "") -> None:
     """
      Extracts the top matched protein description for each query from a BLAST output file and saves the sorted list.
 
@@ -104,50 +104,3 @@ def parse_blast_output(input_file: str, output_file: str = ""):
         output_file.write('\n'.join(proteins))
 
     return None
-
-
-def select_genes_from_gbk_to_fasta(input_gbk,
-                                   genes: str | list[str],
-                                   n_before: int = 1,
-                                   n_after: int = 1,
-                                   output_fasta: str = ""):
-
-    files = os.listdir(input_gbk)
-    gbk_files = [f for f in files if f.endswith('.gbk')]
-
-    for gbk_file in gbk_files:
-        all_genes = []
-        all_proteins = []
-
-        with open(os.path.join(input_gbk, gbk_file), 'r') as file:
-
-            protein_seq = ""
-            gene_name = ""
-
-            for line in file:
-                if line.find('gene') != -1:
-                    gene_name = line.strip()
-                    all_genes.append(gene_name[gene_name.find('"'):].strip('"'))
-
-                if line.find('translation') != -1:
-                    protein_seq = ""
-
-                if gene_name and line.find('CDS') != -1:
-                    protein_seq = protein_seq[protein_seq.find('"'):].strip('"')
-                    all_proteins.append(protein_seq)
-
-                    protein_seq = ""
-
-                protein_seq += line.strip()
-
-        idx = all_genes.index(genes) # пока только со строкой
-
-        neighbors = range(max(idx - n_before, 0), min(idx + n_after + 1, len(all_genes)))
-        for i in neighbors:
-            if i == idx:
-                continue
-
-            # print(f'>{all_genes[i]}\n{all_proteins[i]}')
-
-# select_genes_from_gbk_to_fasta(input_gbk = ".", genes = "pxpB")
-parse_blast_output("example_blast_results.txt")
