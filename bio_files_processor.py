@@ -54,44 +54,54 @@ def convert_multiline_fasta_to_oneline(input_fasta: str, output_fasta: str = "")
 
 
 def parse_blast_output(input_file: str, output_file: str = ""):
+    """
+     Extracts the top matched protein description for each query from a BLAST output file and saves the sorted list.
 
-    with open(input_file, 'r') as file:
-        lines = file.readlines()
+    Parameters
+    ----------
+    input_file : str
+        path to the input BLAST results text file
+    output_file : str, optional
+        filename for the output file with the list of proteins.
+        If not provided, a new file with '_proteins_list.txt' will be created
 
-    first_lines = []
+    Returns
+    -------
+    None
+        The function writes the sorted list of top matched proteins to the output file.
+    """
 
-    for l in range(len(lines)):
-        line = lines[l]
+    if not os.path.isfile(input_file):
+        print(f'File "{input_file}" does not exist or cannot be found. Please specify the full path')
+        return None
 
-        if line.startswith('Sequences producing significant alignments:'):
-            first_lines.append(lines[l+3].strip())
+    directory = os.path.dirname(input_file)
+
+    if output_file == "":
+        prefix = os.path.splitext(os.path.basename(input_file))[0]
+        output_file = prefix + '_proteins_list.txt'
+
+    path_output_file = os.path.join(directory, os.path.basename(output_file))
 
     proteins = []
-    for l in range(len(first_lines)):
-        first_line = first_lines[l]
 
-        idx_spaces = first_line.find('   ')
-        idx_dots = first_line.find('...')
+    with open(input_file, 'r') as file:
 
-        indices = [i for i in [idx_spaces, idx_dots] if i != -1]
+        for line in file:
 
-        stop = min(indices)
-        if stop == idx_dots:
-            protein_name = first_line[:(stop+3)]
-        else:
-            protein_name = first_line[:stop]
+            if line.startswith('Sequences producing significant alignments:'):
+                counter = 0
 
-        proteins.append(protein_name)
+            if "counter" in locals():
+                counter += 1
+
+                if counter == 4:
+                    proteins.append(line[:66].strip())
 
     proteins.sort(key=str.lower)
 
-    if output_file == "":
-        prefix = input_file.split('.')[0]
-        output_file = prefix + '_proteins.txt'
-
-    with open(output_file, 'w') as output_reads:
-        for i in range(len(proteins)):
-            output_reads.write(proteins[i] + '\n')
+    with open(path_output_file, 'w') as output_file:
+        output_file.write('\n'.join(proteins))
 
     return None
 
@@ -140,3 +150,4 @@ def select_genes_from_gbk_to_fasta(input_gbk,
             # print(f'>{all_genes[i]}\n{all_proteins[i]}')
 
 # select_genes_from_gbk_to_fasta(input_gbk = ".", genes = "pxpB")
+parse_blast_output("example_blast_results.txt")
