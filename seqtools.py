@@ -30,11 +30,12 @@ def run_dna_rna_tools(*args: str) -> str | list | None:
 
     *seqs, operation = args
 
-    if not seqs and operation in dna_rna_func:
-        print("Looks like you forgot to provide a nucleotide sequence(s). Please try again!")
-        return None
-
     if operation in dna_rna_func:
+
+        if not seqs:
+            print("Looks like you forgot to provide a nucleotide sequence(s). Please try again!")
+            return None
+
         selected_function = dna_rna_func[operation]
 
         if len(seqs) == 1:
@@ -51,7 +52,7 @@ def run_dna_rna_tools(*args: str) -> str | list | None:
 
 
 def filter_fastq(input_fastq: str,
-                 output_fastq: str = None,
+                 output_fastq: str = "",
                  overwrite: bool = False,
                  gc_bounds: int | float | tuple = (0, 100),
                  length_bounds: int | float | tuple = (0, 2**32),
@@ -86,22 +87,23 @@ def filter_fastq(input_fastq: str,
 
     directory = os.path.dirname(input_fastq)
 
+    filtered_folder = os.path.join(directory, 'filtered')
+    if not os.path.exists(filtered_folder):
+        os.makedirs(filtered_folder)
+
     if output_fastq == "":
         prefix = os.path.splitext(os.path.basename(input_fastq))[0]
         output_fastq = prefix + '_filtered.fastq'
 
-    path_output_fastq = os.path.join(directory, 'filtered', os.path.basename(output_fastq))
+    path_output_fastq = os.path.join(filtered_folder, os.path.basename(output_fastq))
 
-    if path_output_fastq:
+    if os.path.isfile(path_output_fastq) and not overwrite:
         print(f'File "{output_fastq}" is exist! Use overwrite=True to overwrite it')
         return None
 
-    if overwrite:
-        open(path_output_fastq, 'w').close()
-
     with (
         open(input_fastq, 'r') as reads,
-        open(path_output_fastq, 'a') as output_file
+        open(path_output_fastq, 'w') as output_file
     ):
         read = []
 
@@ -121,5 +123,8 @@ def filter_fastq(input_fastq: str,
                     output_file.write(quality + '\n')
 
                 read = []
+
+    if os.path.getsize(path_output_fastq) == 0:
+        print("No sequences passed the filters! Output file is empty")
 
     return None

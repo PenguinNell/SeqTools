@@ -2,36 +2,20 @@ def is_in_gc_bounds(seq: str, gc_bounds: int | float | tuple = (0, 100)) -> bool
     seq = seq.lower()
     gc_count = 100 * (seq.count('g') + seq.count('c')) / len(seq)
 
-    if type(gc_bounds) is not tuple:
+    if isinstance(gc_bounds, (int, float)):
         gc_bounds = (0, gc_bounds)
-
-    if gc_bounds[0] <= gc_count <= gc_bounds[1]:
-        return True
-
-    return False
+    return gc_bounds[0] <= gc_count <= gc_bounds[1]
 
 
 def is_in_length_bounds(seq: str, length_bounds: int | float | tuple = (0, 2**32)) -> bool:
-    if type(length_bounds) is not tuple:
+    if isinstance(length_bounds, (int, float)):
         length_bounds = (0, length_bounds)
-
-    if length_bounds[0] <= len(seq) <= length_bounds[1]:
-        return True
-
-    return False
+    return length_bounds[0] <= len(seq) <= length_bounds[1]
 
 
 def is_above_quality_threshold(quality: str, quality_threshold: float = 0) -> bool:
-    quality_sum=0
-
-    for l in quality:
-        quality_sum += ord(l)-33
-    quality_mean = quality_sum / len(quality)
-
-    if quality_mean >= quality_threshold:
-        return True
-
-    return False
+    quality_mean = sum([ord(letter) - 33 for letter in quality]) / len(quality)
+    return quality_mean >= quality_threshold
 
 
 def is_read_good(seq: str, quality: str,

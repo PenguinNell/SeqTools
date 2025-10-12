@@ -58,3 +58,7 @@ from bio_files_processor import parse_blast_output
 parse_blast_output('results.txt', 'proteins.txt')
 # Output: Each line in 'proteins.txt' contains the best protein match for each query, sorted alphabetically
 ```
+
+## Contact
+For questions, suggestions, or contributions, please contact me at:
+ansycheva26@gmail.com

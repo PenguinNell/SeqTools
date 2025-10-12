@@ -35,7 +35,7 @@ def convert_multiline_fasta_to_oneline(input_fasta: str, output_fasta: str = "")
 
     with (
         open(input_fasta, 'r') as reads,
-        open(path_output_fasta, 'a') as output_reads
+        open(path_output_fasta, 'w') as output_reads
     ):
 
         for line in reads:
