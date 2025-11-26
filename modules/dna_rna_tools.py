@@ -10,20 +10,12 @@ mrna_complement = {'A': 'A', 'T': 'U', 'C': 'C', 'G': 'G',
 
 def is_dna(sequence: str) -> bool:
     unique_chars = set(sequence.upper())
-
-    if unique_chars <= alphabet_dna:
-        return True
-
-    return False
+    return unique_chars <= alphabet_dna
 
 
 def  is_rna(sequence: str) -> bool:
     unique_chars = set(sequence.upper())
-
-    if unique_chars <= alphabet_rna:
-        return True
-
-    return False
+    return unique_chars <= alphabet_rna
 
 
 def is_nucleic_acid(sequence: str) -> bool:
