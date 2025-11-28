@@ -88,19 +88,24 @@ def parse_blast_output(input_file: str, output_file: str = "") -> None:
     path_output_file = os.path.join(directory, os.path.basename(output_file))
 
     proteins = []
+    counter_active = False
+    counter = 0
 
     with open(input_file, 'r') as file:
 
         for line in file:
 
             if line.startswith('Sequences producing significant alignments:'):
+                counter_active = True
                 counter = 0
+                continue
 
-            if "counter" in locals():
+            if counter_active:
                 counter += 1
 
                 if counter == 4:
                     proteins.append(line[:66].strip())
+                    counter_active = False
 
     proteins.sort(key=str.lower)
 
