@@ -24,31 +24,35 @@ def convert_multiline_fasta_to_oneline(input_fasta: str, output_fasta: str = "")
 
     directory = os.path.dirname(input_fasta)
 
-    if output_fasta == "":
+    # if output_fasta == "":
+    if not output_fasta: # универсальнее
         prefix = os.path.splitext(os.path.basename(input_fasta))[0]
         output_fasta = prefix + '_oneline.fasta'
 
     path_output_fasta = os.path.join(directory, os.path.basename(output_fasta))
 
-    if os.path.isfile(path_output_fasta):
-        open(path_output_fasta, 'w').close()
-
     with (
         open(input_fasta, 'r') as reads,
         open(path_output_fasta, 'w') as output_reads
     ):
+        header = None
+        sequence = []
 
         for line in reads:
+            line = line.strip('\n')
 
             if line.startswith('>'):
-                if 'read' not in locals():
-                    read = [line.strip(), ""]
-                else:
-                    output_reads.write(read[0] + '\n')
-                    output_reads.write(read[1] + '\n')
-                    read = [line.strip(), ""]
+                if header is not None:
+                    output_reads.write(header + '\n')
+                    output_reads.write(''.join(sequence) + '\n')
+                header = line
+                sequence = []
             else:
-                read[1] += line.strip()
+                sequence.append(line.strip())
+
+        if header is not None: # last string
+            output_reads.write(header + '\n')
+            output_reads.write(''.join(sequence) + '\n')
 
     return None
 
