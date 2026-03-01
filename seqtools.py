@@ -1,11 +1,11 @@
-# for classes that defined below
-from __future__ import annotations
+from __future__ import annotations # for classes that defined below
 
 import os
-import modules.fastq_filter_checkers as fastq_filter
-
 from abc import ABC, abstractmethod
-from typing import Self # return the same type of object
+from typing import Self  # return the same type of object
+
+from Bio import SeqIO
+from Bio.SeqUtils import gc_fraction
 
 
 class BiologicalSequence(ABC):
@@ -259,7 +259,7 @@ def filter_fastq(input_fastq: str,
                  length_bounds: int | float | tuple = (0, 2**32),
                  quality_threshold: int | float = 0) -> None:
     """
-    Filters FASTQ file by GC content, length, and quality.
+    Filters FASTQ file by GC content, length, and quality
 
     Parameters
     ----------
@@ -279,7 +279,7 @@ def filter_fastq(input_fastq: str,
     Returns
     -------
     None
-        This function does not return any value. The filtered data is written to a FASTQ file.
+        This function does not return any value. The filtered data is written to a FASTQ file
     """
 
     if not os.path.isfile(input_fastq):
@@ -306,24 +306,25 @@ def filter_fastq(input_fastq: str,
         open(input_fastq, 'r') as reads,
         open(path_output_fastq, 'w') as output_file
     ):
-        read = []
+        for record in SeqIO.parse(reads, "fastq"):
 
-        for line in reads:
-            read.append(line.strip())
+            gc_percent = gc_fraction(record.seq) * 100
+            if isinstance(gc_bounds, (int, float)):
+                gc_bounds = (0, gc_bounds)
+            if not (gc_bounds[0] <= gc_percent <= gc_bounds[1]):
+                continue
 
-            if len(read) == 4:
-                seq_id = read[0]
-                seq = read[1]
-                separator = read[2]
-                quality = read[3]
+            if isinstance(length_bounds, (int, float)):
+                length_bounds = (0, length_bounds)
+            if not (length_bounds[0] <= len(record) <= length_bounds[1]):
+                continue
 
-                if fastq_filter.is_read_good(seq, quality, gc_bounds, length_bounds, quality_threshold):
-                    output_file.write(seq_id + '\n')
-                    output_file.write(seq + '\n')
-                    output_file.write(separator + '\n')
-                    output_file.write(quality + '\n')
+            phred = record.letter_annotations["phred_quality"]
+            mean_q = sum(phred) / len(phred)
+            if not (mean_q >= quality_threshold):
+                continue
 
-                read = []
+            SeqIO.write(record, output_file, "fastq")
 
     if os.path.getsize(path_output_fastq) == 0:
         print("No sequences passed the filters! Output file is empty")
