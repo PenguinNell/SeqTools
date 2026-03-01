@@ -1,54 +1,255 @@
+# for classes that defined below
+from __future__ import annotations
+
 import os
-import modules.dna_rna_tools as nuclei
 import modules.fastq_filter_checkers as fastq_filter
 
-
-dna_rna_func={'is_nucleic_acid': nuclei.is_nucleic_acid,
-              'transcribe': nuclei.transcribe,
-              'reverse': nuclei.reverse,
-              'complement': nuclei.get_complement,
-              'reverse_complement': nuclei.get_reverse_complement}
+from abc import ABC, abstractmethod
+from typing import Self # return the same type of object
 
 
-def run_dna_rna_tools(*args: str) -> str | list | None:
+class BiologicalSequence(ABC):
     """
-    Applies a specified procedure to one or multiple nucleotide sequences
+    Abstract class for biological sequences
+    Provides interface for:
+    - length calculation
+    - indexing and slicing
+    - print
+    - alphabet check
 
     Parameters
     ----------
-    *args :
-        any number of string arguments, where: the first N arguments are nucleotide sequences
-        and the last argument is the procedure to apply
-        (supported procedures: 'is_nucleic_acid', 'transcribe', 'reverse',
-        'complement', 'reverse_complement')
+    seq : str
+        Sequence string
 
-    Returns
-    -------
-    str | list | None
-        Returns result of the specified procedure (str or list). If the procedure is not supported - returns None
+    Raises
+    ------
+    ValueError
+        If the sequence contains invalid characters
     """
 
-    *seqs, operation = args
+    def __init__(self, seq: str) -> None:
+        self.seq = str(seq)
+        self.check_alphabet()
 
-    if operation in dna_rna_func:
+    def __len__(self) -> int:
+        """
+        Return sequence length
 
-        if not seqs:
-            print("Looks like you forgot to provide a nucleotide sequence(s). Please try again!")
-            return None
+        Returns
+        -------
+        int
+            Length of the stored sequence
+        """
+        return len(self.seq)
 
-        selected_function = dna_rna_func[operation]
+    def __getitem__(self, key: int | slice) -> str | Self:
+        """
+        Get element(s) by index or slice
 
-        if len(seqs) == 1:
-            res = selected_function(seqs[0])
-            return res
+        Parameters
+        ----------
+        key : int | slice
+            Index (int) returns a single character (str)
+            Slice returns an object of the same class as self
 
-        res = []
-        for sq in seqs:
-            res.append(selected_function(sq))
-        return res
+        Returns
+        -------
+        str | Self
+            Single character for int index, or a new sequence string for slice
+        """
+        part = self.seq[key]
+        if isinstance(key, slice):
+            return self.__class__(part) # to keep data type (DNASequence -> DNASequence)
+        return part
 
-    print("Looks like you forgot to specify what to do with the sequence(s). Please try again!")
-    return None
+    def __str__(self) -> str:
+        """
+        Allows to print the sequence
+
+        Returns
+        -------
+        str
+            Stored sequence string
+        """
+        return self.seq
+
+    @abstractmethod
+    def check_alphabet(self) -> None:
+        """
+        Validate that sequence contains only allowed characters
+
+        Raises
+        ------
+        ValueError
+            If sequence contains invalid characters
+        """
+        raise NotImplementedError
+
+
+class NucleicAcidSequence(BiologicalSequence):
+    """
+    Class for nucleotide sequences (DNA/RNA).
+
+    Implements:
+    - alphabet validation (based on subclass-defined alphabet)
+    - complement / reverse / reverse_complement operations
+
+    Notes
+    -----
+    Subclasses must define:
+    - _ALPHABET : set[str]
+    - _COMPLEMENT : dict[str, str]
+    """
+
+    _ALPHABET: set[str] | None = None
+    _COMPLEMENT: dict[str, str] | None = None
+
+    def check_alphabet(self) -> None:
+        """
+        Validate nucleotide alphabet
+
+        Raises
+        ------
+        NotImplementedError
+            For the instance of NucleicAcidSequence class
+        ValueError
+            If sequence contains invalid letters
+        """
+        if self._ALPHABET is None:
+            raise NotImplementedError("Alphabet is not defined, use DNASequence or RNASequence class")
+
+        invalid_letters = set(self.seq.upper()) - self._ALPHABET
+        if invalid_letters:
+            invalid_str = ", ".join(invalid_letters)
+            raise ValueError(f"Invalid  letter(s) {invalid_str} in nucleotide sequence {self.seq}")
+
+    def complement(self) -> Self:
+        """
+        Return the complement sequence
+
+        Returns
+        -------
+        Self
+            Complement sequence of the same class as self
+
+        Raises
+        ------
+        NotImplementedError
+            For the instance of NucleicAcidSequence class
+        """
+        if self._COMPLEMENT is None:
+            raise NotImplementedError("Complement is not defined, use DNASequence or RNASequence class")
+
+        output = []
+        for nt in self.seq:
+            output.append(self._COMPLEMENT[nt])
+        return self.__class__("".join(output)) # keep class type
+
+    def reverse(self) -> Self:
+        """
+        Return reversed sequence
+
+        Returns
+        -------
+        Self
+            Reversed sequence of the same class as self
+        """
+        return self.__class__(self.seq[::-1])
+
+    def reverse_complement(self) -> Self:
+        """
+        Return reverse complement sequence
+
+        Returns
+        -------
+        Self
+            Reverse complement sequence of the same class as self
+        """
+        return self.complement().reverse()
+
+
+class DNASequence(NucleicAcidSequence):
+    """
+    DNA sequence class
+    """
+
+    _ALPHABET = set("ATGC")
+    _COMPLEMENT = {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G',
+                   'a': 't', 't': 'a', 'g': 'c', 'c': 'g'}
+
+    def transcribe(self) -> RNASequence:
+        """
+        Transcribe DNA to RNA (T -> U), keep character case
+
+        Returns
+        -------
+        RNASequence
+            RNA sequence produced by transcription
+        """
+        output = []
+        for nt in self.seq:
+            if nt == "T":
+                output.append("U")
+            elif nt == "t":
+                output.append("u")
+            else:
+                output.append(nt)
+        return RNASequence("".join(output))
+
+
+class RNASequence(NucleicAcidSequence):
+    """
+    RNA sequence class
+    """
+
+    _ALPHABET = set("AUGC")
+    _COMPLEMENT = {'A': 'U', 'U': 'A', 'G': 'C', 'C': 'G',
+                   'a': 'u', 'u': 'a', 'g': 'c', 'c': 'g'}
+
+
+class AminoAcidSequence(BiologicalSequence):
+    """
+    Amino acid sequence class
+    """
+
+    _ALPHABET = set("ACDEFGHIKLMNPQRSTVWY")
+
+    def check_alphabet(self) -> None:
+        """
+        Validate amino acid alphabet
+
+        Raises
+        ------
+        ValueError
+            If sequence contains invalid letters
+        """
+        invalid_letters = set(self.seq.upper()) - self._ALPHABET
+        if invalid_letters:
+            invalid_str = ", ".join(invalid_letters)
+            raise ValueError(f"Invalid letter(s) {invalid_str} in amino acid sequence {self.seq}")
+
+    def aa_frequencies(self) -> dict[str, float]:
+        """
+        Compute relative frequencies of amino acids in the sequence
+
+        Returns
+        -------
+        dict[str, float]
+            Dictionary for mapping letters and their frequency, rounded to 2 decimals
+        """
+        counts = {}
+        for aa in self.seq.upper():
+            if aa in counts:
+                counts[aa] += 1
+            else:
+                counts[aa] = 1
+
+        freqs = {}
+        for aa, count in counts.items():
+            freqs[aa] = round(count / len(self.seq), 2)
+
+        return freqs
 
 
 def filter_fastq(input_fastq: str,
