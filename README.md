@@ -54,7 +54,7 @@ git clone https://github.com/PenguinNell/SeqTools.git
 
 Install dependencies (Biopython is required for FASTQ filtering):
 ```
-pip install biopython
+pip install -r requirements.txt
 ```
 
 ## Usage
