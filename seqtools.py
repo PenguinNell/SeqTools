@@ -3,6 +3,7 @@ from __future__ import annotations # for classes that defined below
 import os
 from abc import ABC, abstractmethod
 from typing import Self  # return the same type of object
+from loguru import logger
 
 from Bio import SeqIO
 from Bio.SeqUtils import gc_fraction
@@ -264,6 +265,24 @@ def filter_fastq(input_fastq: str,
         This function does not return any value. The filtered data is written to a FASTQ file
     """
 
+    logger.add(
+        "filter_fastq.log",
+        level="INFO",
+        format="{time:YYYY-MM-DD HH:mm:ss.SSS} | {level: <8} | {name}:{function}:{line} - {message}",
+        colorize=False,
+        rotation="1 week"
+    )
+
+    logger.info(
+        "Start filtering: input={input_fastq}, output_fastq={output_fastq}, overwrite={overwrite}, gc_bounds={gc_bounds}, length_bounds={length_bounds}, quality_threshold={quality_threshold}",
+        input_fastq=input_fastq,
+        output_fastq=output_fastq,
+        overwrite=overwrite,
+        gc_bounds=gc_bounds,
+        length_bounds=length_bounds,
+        quality_threshold=quality_threshold
+    )
+
     if not os.path.isfile(input_fastq):
         print(f'File "{input_fastq}" does not exist or cannot be found. Please specify the full path')
         return None
@@ -289,27 +308,56 @@ def filter_fastq(input_fastq: str,
     if isinstance(length_bounds, (int, float)):
         length_bounds = (0, length_bounds)
 
-    with (
-        open(input_fastq, 'r') as reads,
-        open(path_output_fastq, 'w') as output_file
-    ):
-        for record in SeqIO.parse(reads, "fastq"):
+    # statistics
+    total = 0
+    passed = 0
+    dropped_by_gc = 0
+    dropped_by_len = 0
+    dropped_by_q = 0
 
-            gc_percent = gc_fraction(record.seq) * 100
-            if not (gc_bounds[0] <= gc_percent <= gc_bounds[1]):
-                continue
+    try:
+        with (
+            open(input_fastq, 'r') as reads,
+            open(path_output_fastq, 'w') as output_file
+        ):
+            for record in SeqIO.parse(reads, "fastq"):
+                total += 1
 
-            if not (length_bounds[0] <= len(record) <= length_bounds[1]):
-                continue
+                gc_percent = gc_fraction(record.seq) * 100
+                if not (gc_bounds[0] <= gc_percent <= gc_bounds[1]):
+                    dropped_by_gc += 1
+                    continue
 
-            phred = record.letter_annotations["phred_quality"]
-            mean_q = sum(phred) / len(phred)
-            if not (mean_q >= quality_threshold):
-                continue
+                if not (length_bounds[0] <= len(record) <= length_bounds[1]):
+                    dropped_by_len += 1
+                    continue
 
-            SeqIO.write(record, output_file, "fastq")
+                phred = record.letter_annotations["phred_quality"]
+                mean_q = sum(phred) / len(phred)
+                if not (mean_q >= quality_threshold):
+                    dropped_by_q += 1
+                    continue
+
+                SeqIO.write(record, output_file, "fastq")
+                passed += 1
+
+    except Exception as exc:
+        # I added example_bad_fastq.fastq to demonstrate handling of Biopython error:
+        # ValueError: Lengths of sequence and quality values differs for SRX079804:1:SRR292678:1:1101:21885:21885 1:N:0:1 BH:ok (88 and 89).
+        logger.opt(exception=True).error("Unhandled exception while filtering FASTQ: {exc}", exc=exc)
+        raise # to be detected for tests
 
     if os.path.getsize(path_output_fastq) == 0:
         print("No sequences passed the filters! Output file is empty")
+
+    logger.info(
+        "Done. Total={total}, passed={passed}, dropped_by_gc={dgc}, dropped_by_len={dlen}, dropped_by_q={dq}. Output={out}",
+        total=total,
+        passed=passed,
+        dgc=dropped_by_gc,
+        dlen=dropped_by_len,
+        dq=dropped_by_q,
+        out=path_output_fastq
+    )
 
     return None
