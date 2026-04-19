@@ -1,5 +1,6 @@
 import pytest
 from pathlib import Path
+from Bio import SeqIO
 
 from seqtools import filter_fastq
 
@@ -64,30 +65,26 @@ class TestCheckParams:
     def test_gc_bounds_upper(self, test_fastq_file):
         filter_fastq(test_fastq_file, gc_bounds=25)
         out_file = _create_output_path(test_fastq_file)
-        out = out_file.read_text()
-        assert all(read in out for read in ["@read1", "@read2"])
-        assert all(read not in out for read in ["@read3", "@read4"])
+        ids = [read.id for read in SeqIO.parse(out_file, "fastq")]
+        assert ids == ["read1", "read2"]
 
     def test_gc_bounds_tuple(self, test_fastq_file):
         filter_fastq(test_fastq_file, gc_bounds=(25, 70))
         out_file = _create_output_path(test_fastq_file)
-        out = out_file.read_text()
-        assert all(read in out for read in ["@read2", "@read3"])
-        assert all(read not in out for read in ["@read1", "@read4"])
+        ids = [read.id for read in SeqIO.parse(out_file, "fastq")]
+        assert ids == ["read2", "read3"]
 
     def test_len_bounds_tuple(self, test_fastq_file):
         filter_fastq(test_fastq_file, length_bounds=(10, 20))
         out_file = _create_output_path(test_fastq_file)
-        out = out_file.read_text()
-        assert all(read in out for read in ["@read1", "@read4"])
-        assert all(read not in out for read in ["@read2", "@read3"])
+        ids = [read.id for read in SeqIO.parse(out_file, "fastq")]
+        assert ids == ["read1", "read4"]
 
     def test_quality_threshold_filter(self, test_fastq_file):
         filter_fastq(test_fastq_file, quality_threshold=35)
         out_file = _create_output_path(test_fastq_file)
-        out = out_file.read_text()
-        assert all(read in out for read in ["@read1", "@read2"])
-        assert all(read not in out for read in ["@read3", "@read4"])
+        ids = [read.id for read in SeqIO.parse(out_file, "fastq")]
+        assert ids == ["read1", "read2"]
 
 
 class TestCheckOutput:
@@ -95,23 +92,21 @@ class TestCheckOutput:
         filter_fastq(test_fastq_file)  # all should pass
         out_file = _create_output_path(test_fastq_file)
         assert out_file.exists()
-
-        out = out_file.read_text()
-        assert all(read in out for read in ["@read1", "@read2", "@read3", "@read4"])
+        ids = [read.id for read in SeqIO.parse(out_file, "fastq")]
+        assert ids == ["read1", "read2", "read3", "read4"]
 
     def test_creates_given_output(self, test_fastq_file):
         filter_fastq(input_fastq=test_fastq_file, output_fastq="test.fastq")  # all should pass
         out_file = _create_output_path(input_fastq=test_fastq_file, output_fastq="test.fastq")
         assert out_file.exists()
-
-        out = out_file.read_text()
-        assert all(read in out for read in ["@read1", "@read2", "@read3", "@read4"])
+        ids = [read.id for read in SeqIO.parse(out_file, "fastq")]
+        assert ids == ["read1", "read2", "read3", "read4"]
 
     def test_not_overwrite_output(self, test_fastq_file, capsys):
         # 1st call
         filter_fastq(input_fastq=test_fastq_file, output_fastq="test.fastq")  # all should pass
         out_file1 = _create_output_path(input_fastq=test_fastq_file, output_fastq="test.fastq")
-        out = out_file1.read_text()
+        ids = [read.id for read in SeqIO.parse(out_file1, "fastq")]
 
         # 2nd call
         filter_fastq(input_fastq=test_fastq_file,
@@ -119,9 +114,8 @@ class TestCheckOutput:
                      length_bounds=(10, 20))  # only @read1 and @read4 should pass
         captured = capsys.readouterr()
         assert 'Use overwrite=True to overwrite it' in captured.out
-
         out_file2 = _create_output_path(input_fastq=test_fastq_file, output_fastq="test.fastq")
-        assert out == out_file2.read_text()
+        assert ids == [read.id for read in SeqIO.parse(out_file2, "fastq")]
 
     def test_empty_output(self, test_fastq_file, capsys):
         filter_fastq(test_fastq_file, gc_bounds=0)
