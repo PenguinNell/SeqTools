@@ -342,10 +342,10 @@ def filter_fastq(input_fastq: str,
                 passed += 1
 
     except Exception as exc:
-        # I added example_bad_fastq.fastq to demonstrate handling of SeqIO error:
+        # I added example_bad_fastq.fastq to demonstrate handling of Biopython error:
         # ValueError: Lengths of sequence and quality values differs for SRX079804:1:SRR292678:1:1101:21885:21885 1:N:0:1 BH:ok (88 and 89).
         logger.opt(exception=True).error("Unhandled exception while filtering FASTQ: {exc}", exc=exc)
-        return None
+        raise # to be detected for tests
 
     if os.path.getsize(path_output_fastq) == 0:
         print("No sequences passed the filters! Output file is empty")
