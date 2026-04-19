@@ -33,14 +33,6 @@ class BiologicalSequence(ABC):
         self.check_alphabet()
 
     def __len__(self) -> int:
-        """
-        Return sequence length
-
-        Returns
-        -------
-        int
-            Length of the stored sequence
-        """
         return len(self.seq)
 
     def __getitem__(self, key: int | slice) -> str | Self:
@@ -141,10 +133,8 @@ class NucleicAcidSequence(BiologicalSequence):
         if self._COMPLEMENT is None:
             raise NotImplementedError("Complement is not defined, use DNASequence or RNASequence class")
 
-        output = []
-        for nt in self.seq:
-            output.append(self._COMPLEMENT[nt])
-        return self.__class__("".join(output)) # keep class type
+        complement_table = str.maketrans(self._COMPLEMENT)
+        return self.__class__(self.seq.translate(complement_table))
 
     def reverse(self) -> Self:
         """
@@ -187,15 +177,7 @@ class DNASequence(NucleicAcidSequence):
         RNASequence
             RNA sequence produced by transcription
         """
-        output = []
-        for nt in self.seq:
-            if nt == "T":
-                output.append("U")
-            elif nt == "t":
-                output.append("u")
-            else:
-                output.append(nt)
-        return RNASequence("".join(output))
+        return RNASequence(self.seq.replace("T", "U").replace("t", "u"))
 
 
 class RNASequence(NucleicAcidSequence):
@@ -302,6 +284,11 @@ def filter_fastq(input_fastq: str,
         print(f'File "{output_fastq}" is exist! Use overwrite=True to overwrite it')
         return None
 
+    if isinstance(gc_bounds, (int, float)):
+        gc_bounds = (0, gc_bounds)
+    if isinstance(length_bounds, (int, float)):
+        length_bounds = (0, length_bounds)
+
     with (
         open(input_fastq, 'r') as reads,
         open(path_output_fastq, 'w') as output_file
@@ -309,13 +296,9 @@ def filter_fastq(input_fastq: str,
         for record in SeqIO.parse(reads, "fastq"):
 
             gc_percent = gc_fraction(record.seq) * 100
-            if isinstance(gc_bounds, (int, float)):
-                gc_bounds = (0, gc_bounds)
             if not (gc_bounds[0] <= gc_percent <= gc_bounds[1]):
                 continue
 
-            if isinstance(length_bounds, (int, float)):
-                length_bounds = (0, length_bounds)
             if not (length_bounds[0] <= len(record) <= length_bounds[1]):
                 continue
 
