@@ -78,7 +78,7 @@ protein = AminoAcidSequence("aAaCC")
 print(protein.aa_frequencies())  # Output: {'A': 0.6, 'C': 0.4} 
 ```
 
-### Example 2: Filtering FASTQ files
+### Example 2a : Filtering FASTQ files (Python API)
 
 ```python
 from seqtools import filter_fastq
@@ -92,6 +92,30 @@ filter_fastq(
 )
 #  Output: Filtered FASTQ file in 'filtered' subdirectory
 ```
+
+### Example 2b: Filtering FASTQ files (CLI)
+A command-line interface for FASTQ filtering is available via the script filter_fastq_cli.py.
+
+Show help:
+```bash
+python filter_fastq_cli.py --help
+```
+
+Minimal run (only input file; all filters are defaults):
+```bash
+python filter_fastq_cli.py reads.fastq
+```
+
+CLI supports the same filters:
+```bash
+python filter_fastq_cli.py reads.fastq --gc-bounds 40 60 --length-bounds 5 10 -q 30 --overwrite
+```
+
+If you want to provide only an upper bound, use the --gc-upper / --length-upper options instead of --gc-bounds / --length-bounds:
+```bash
+python filter_fastq_cli.py reads.fastq --gc-upper 60 --length-upper 10 -q 30
+```
+Use either --gc-upper or --gc-bounds (same for length), not both. 
 
 ### Example 3: Converting Multi-line FASTA to One-line Format
 
