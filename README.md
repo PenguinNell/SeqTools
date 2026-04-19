@@ -94,7 +94,7 @@ filter_fastq(
 ```
 
 ### Example 2b: Filtering FASTQ files (CLI)
-A command-line interface for FASTQ filtering is available via the script filter_fastq_cli.py.
+A command-line interface for FASTQ filtering is available via the script `filter_fastq_cli.py`.
 
 Show help:
 ```bash
@@ -111,11 +111,11 @@ CLI supports the same filters:
 python filter_fastq_cli.py reads.fastq --gc-bounds 40 60 --length-bounds 5 10 -q 30 --overwrite
 ```
 
-If you want to provide only an upper bound, use the --gc-upper / --length-upper options instead of --gc-bounds / --length-bounds:
+If you want to provide only an upper bound, use the `--gc-upper` / `--length-upper` options instead of `--gc-bounds` / `--length-bounds`:
 ```bash
 python filter_fastq_cli.py reads.fastq --gc-upper 60 --length-upper 10 -q 30
 ```
-Use either --gc-upper or --gc-bounds (same for length), not both. 
+Use either `--gc-upper` or `--gc-bounds` (same for length), not both. 
 
 ### Example 3: Converting Multi-line FASTA to One-line Format
 
